@@ -1,0 +1,51 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          lower-case-service-id: true
+          enabled: true
+      routes:
+        - id: product-service-route
+          uri: lb://product-service
+          predicates:
+            - Path=/api/v1/products/**,/api/v1/categories/**
+
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /$\{segment}
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 2
+            - name: CircuitBreaker
+              args:
+                  name: productServiceCircuitBreaker
+                  fallbackUri: forward:/fallback/product
+
+        - id: order-service-route
+          uri: http://localhost:6001
+          predicates:
+            - Path=/api/v1/orders/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /$\{segment}
+
+        - id: payment-service-route
+          uri: http://localhost:6002
+          predicates:
+            - Path=/api/v1/payments/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /$\{segment}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+
