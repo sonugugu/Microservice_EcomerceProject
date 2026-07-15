@@ -8,6 +8,8 @@ import com.ecom.product_service.dto.CategoryResponseDto;
 import com.ecom.product_service.dto.ExtendedCategoryResponseDto;
 import com.ecom.product_service.entity.Category;
 import com.ecom.product_service.entity.Product;
+import com.ecom.product_service.exception.CategoryAlreadyExistsException;
+import com.ecom.product_service.exception.CategoryNotFoundException;
 import com.ecom.product_service.repository.CategoryRepository;
 import com.ecom.product_service.service.CategoryService;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryResponseDto createCategory(CategoryRequestDto categoryRequestDto) {
+        categoryRepository.findByName(categoryRequestDto.getName())
+                .ifPresent(category -> {
+                    throw new CategoryAlreadyExistsException(
+                            "Category already exists with name : "
+                                    + categoryRequestDto.getName());
+                });
+
         Category category= new Category();
         category.setName(categoryRequestDto.getName());
         category.setDescription(categoryRequestDto.getDescription());
@@ -35,7 +44,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public ExtendedCategoryResponseDto getCategoryById(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id : " + categoryId));
         return convertToExtendedCategoryResponseDto(category);
     }
 
@@ -54,7 +65,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponseDto updateCategory(String categoryId, CategoryRequestDto categoryRequestDto) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id : " + categoryId));
         category.setName(categoryRequestDto.getName());
         category.setDescription(categoryRequestDto.getDescription());
         Category updatedCategory = categoryRepository.save(category);
@@ -64,7 +77,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public String deleteCategory(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id : " + categoryId));
         categoryRepository.delete(category);
         return  "Category " + categoryId +" deleted successfully";
 
