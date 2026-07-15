@@ -4,6 +4,9 @@ import com.ecom.product_service.dto.ProductRequestDto;
 import com.ecom.product_service.dto.ProductResponseDto;
 import com.ecom.product_service.entity.Category;
 import com.ecom.product_service.entity.Product;
+import com.ecom.product_service.exception.CategoryNotFoundException;
+import com.ecom.product_service.exception.ProductAlreadyExistsException;
+import com.ecom.product_service.exception.ProductNotFoundException;
 import com.ecom.product_service.repository.CategoryRepository;
 import com.ecom.product_service.repository.ProductRepository;
 import com.ecom.product_service.service.ProductService;
@@ -21,8 +24,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
+        productRepository.findByName(productRequestDto.getName())
+                .ifPresent(product -> {
+                    throw new ProductAlreadyExistsException(
+                            "Product already exists with name : "
+                                    + productRequestDto.getName());
+                });
+
         Category category = categoryRepository.findById(productRequestDto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id : "
+                                        + productRequestDto.getCategoryId()));
+
         Product product = new Product();
         product.setName(productRequestDto.getName());
         product.setDescription(productRequestDto.getDescription());
@@ -36,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDto getProductById(String productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
         return convertToDto(product);
     }
 
@@ -50,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDto updateStock(String productId, Integer stockQuantity) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException( "Product not found with id : " + productId));
        // product.setStockQuantity(stockQuantity);
         // if you want to add stock quantity each time, then use below code
         product.setStockQuantity(product.getStockQuantity() + stockQuantity);
@@ -62,7 +76,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public String deleteProduct(String productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException( "Product not found with id : " + productId));
         productRepository.delete(product);
         return "Product " + productId +" deleted successfully";
     }
