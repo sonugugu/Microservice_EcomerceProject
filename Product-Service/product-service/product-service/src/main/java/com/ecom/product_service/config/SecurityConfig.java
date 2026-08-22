@@ -48,6 +48,16 @@ public class SecurityConfig {
                                 "/categories/**"
                         ).hasRole("ADMIN")
 
+                        // =================================
+                        // Bulk import
+                        // =================================
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/import"
+                        ).hasRole("ADMIN")
+
+
 
                         // =====================================
                         // PUT → ADMIN
