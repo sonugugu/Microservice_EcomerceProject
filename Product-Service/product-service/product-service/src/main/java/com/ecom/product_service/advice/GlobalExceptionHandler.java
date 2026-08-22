@@ -1,14 +1,19 @@
 package com.ecom.product_service.advice;
 import com.ecom.product_service.dto.ExceptionResponseDto;
-import com.ecom.product_service.exception.CategoryAlreadyExistsException;
-import com.ecom.product_service.exception.CategoryNotFoundException;
-import com.ecom.product_service.exception.ProductAlreadyExistsException;
-import com.ecom.product_service.exception.ProductNotFoundException;
+import com.ecom.product_service.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 
@@ -83,5 +88,51 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+    // Adding for Bulk import
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ExceptionResponseDto> handleValidationException(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error ->
+                        error.getField()
+                                + ": "
+                                + error.getDefaultMessage()
+                )
+                .collect(Collectors.joining(", "));
+
+        ExceptionResponseDto response =
+                new ExceptionResponseDto(
+                        request.getRequestURI(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        message,
+                        LocalDateTime.now()
+                );
+
+        return ResponseEntity
+                .badRequest()
+                .body(response);
+    }
+    @ExceptionHandler(InvalidImportFileException.class)
+    public ResponseEntity<ExceptionResponseDto>
+    handleInvalidImportFile(
+            InvalidImportFileException ex,
+            HttpServletRequest request) {
+
+        ExceptionResponseDto response =
+                new ExceptionResponseDto(
+                        request.getRequestURI(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                );
+
+        return ResponseEntity
+                .badRequest()
+                .body(response);
     }
 }
