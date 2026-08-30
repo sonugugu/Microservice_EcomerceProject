@@ -39,91 +39,57 @@ public class BulkImportServiceImpl
     @Transactional
     public BulkImportResponse importData(
             MultipartFile file) {
-
         try {
-
-            // =========================================
             // 1. Read JSON file
-            // =========================================
-
             BulkImportRequest request =
                     objectMapper.readValue(
                             file.getInputStream(),
                             BulkImportRequest.class
                     );
-
-
-            // =========================================
             // 2. Validate JSON structure
-            // =========================================
-
             if (request == null) {
-
                 throw new RuntimeException(
                         "JSON file is empty"
                 );
             }
-
             if (request.getCategories() == null) {
-
                 throw new RuntimeException(
                         "categories section is missing"
                 );
             }
-
             if (request.getProducts() == null) {
 
                 throw new RuntimeException(
                         "products section is missing"
                 );
             }
-
-
             List<CategoryImportDto> categoryDtos =
                     request.getCategories();
 
             List<ProductImportDto> productDtos =
                     request.getProducts();
 
-
-            // =========================================
             // 3. Validate categories
-            // =========================================
-
             List<String> categoryNames =
                     categoryImportService
                             .validateCategories(categoryDtos);
-
-
-            // =========================================
             // 4. Validate products
-            // =========================================
-
             productImportService.validateProducts(
                     productDtos,
                     categoryNames
             );
-
-
-            // =========================================
             // 5. Create Categories
-            // =========================================
-
             List<Category> categories =
                     categoryDtos.stream()
                             .map(dto -> {
-
                                 Category category =
                                         new Category();
-
                                 category.setName(
                                         dto.getName().trim()
                                 );
-
                                 category.setDescription(
                                         dto.getDescription()
                                 );
-
                                 return category;
                             })
                             .toList();
@@ -132,28 +98,16 @@ public class BulkImportServiceImpl
                     categoryRepository.saveAll(
                             categories
                     );
-
-
-            // =========================================
             // 6. Create Category Map
-            // =========================================
-
             Map<String, Category> categoryMap =
                     new HashMap<>();
-
             for (Category category : savedCategories) {
-
                 categoryMap.put(
                         category.getName().toLowerCase(),
                         category
                 );
             }
-
-
-            // =========================================
             // 7. Create Products
-            // =========================================
-
             List<Product> products =
                     productDtos.stream()
                             .map(dto -> {
@@ -202,18 +156,9 @@ public class BulkImportServiceImpl
                             })
                             .toList();
 
-
-            // =========================================
             // 8. Save Products
-            // =========================================
-
             productRepository.saveAll(products);
-
-
-            // =========================================
             // 9. Return response
-            // =========================================
-
             return new BulkImportResponse(
 
                     savedCategories.size(),

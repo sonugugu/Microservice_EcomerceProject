@@ -17,7 +17,7 @@ public class BulkImportController {
     @PostMapping
     public ResponseEntity<BulkImportResponse> importData(
             @RequestParam("file") MultipartFile file) {
-
+        //Take the uploaded file from the request field named file and store it in the Java variable file
         BulkImportResponse response =
                 bulkImportService.importData(file);
 
