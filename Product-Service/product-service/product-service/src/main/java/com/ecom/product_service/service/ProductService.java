@@ -16,4 +16,10 @@ public interface ProductService {
     ProductResponseDto updateStock(String productId, Integer stockQuantity);
 
     String deleteProduct(String productId);
+
+    List<ProductResponseDto> searchProducts(
+            Double minPrice,
+            Double maxPrice,
+            String categoryName
+    );
 }

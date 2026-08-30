@@ -80,6 +80,35 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
         return "Product " + productId +" deleted successfully";
     }
+    @Override
+    public List<ProductResponseDto> searchProducts(Double minPrice,Double maxPrice, String categoryName) {
+
+        return productRepository
+                .findByPriceBetweenAndCategory_Name(
+                        minPrice,
+                        maxPrice,
+                        categoryName
+                )
+                .stream()
+                .map(this::convertToDto)//product -> convertToDto(product) or.map(ProductMapping::toProductResponseDto)
+                .toList();
+    }
+    /*
+    WITHOUT MAP, STREAM
+       List<Product> products =
+            productRepository.findByPriceBetweenAndCategory_Name(
+                    minPrice,
+                    maxPrice,
+                    categoryName
+            );
+    List<ProductResponseDto> responseList = new ArrayList<>();
+    for (Product product : products) {
+        ProductResponseDto dto = convertToDto(product);
+        responseList.add(dto);
+    }
+    return responseList;
+}
+     */
 
     private ProductResponseDto convertToDto(Product product) {
 
